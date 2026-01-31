@@ -64,7 +64,7 @@ function isTokenExpired(expiresAt: number | null): boolean {
   return Date.now() >= expiresAt
 }
 
-export const createAuthSlice: StateCreator<AuthSlice, [], [], AuthSlice> = (set, get) => ({
+export const createAuthSlice: StateCreator<AuthSlice, [], [], AuthSlice> = (set, _get) => ({
   auth: initialAuthState,
   authLoading: true,
 
