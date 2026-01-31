@@ -14,6 +14,18 @@ const URLS = [
 const PROMPTS_CACHE_KEY = 'banana_prompts_cache_v1'
 const PROMPTS_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
+// NSFW 关键词检测
+const NSFW_KEYWORDS = [
+  'nsfw', 'nude', 'naked', 'sexy', 'erotic', 'hentai', 'porn', 'xxx',
+  'adult', 'explicit', 'lewd', 'sensual', 'seductive', 'lingerie',
+  '裸', '色情', '成人', '性感', '诱惑', '暴露'
+]
+
+function isNSFW(item: { title?: string; prompt?: string; category?: string }): boolean {
+  const text = [item.title, item.prompt, item.category].join(' ').toLowerCase()
+  return NSFW_KEYWORDS.some(kw => text.includes(kw.toLowerCase()))
+}
+
 // Extract tags from prompt text
 function extractTags(prompt: string, category: string, mode: string): string[] {
   const tags: string[] = []
@@ -69,6 +81,7 @@ export default function BananaModal() {
   const [modeFilter, setModeFilter] = useState<PromptModeFilter>('all')
   const [tagFilter, setTagFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [showNSFW, setShowNSFW] = useState(false)
 
   const readPromptsCache = (): { data: BananaPrompt[]; expired: boolean } | null => {
     try {
@@ -237,6 +250,9 @@ export default function BananaModal() {
 
   const primaryFiltered = useMemo(() => {
     return baseItems.filter((item) => {
+      // NSFW 过滤
+      if (!showNSFW && isNSFW(item)) return false
+
       if (modeFilter !== 'all' && item.mode !== modeFilter) return false
 
       if (searchTerm) {
@@ -254,7 +270,7 @@ export default function BananaModal() {
 
       return true
     })
-  }, [baseItems, modeFilter, searchTerm])
+  }, [baseItems, modeFilter, searchTerm, showNSFW])
 
   const availableTags = useMemo(() => {
     const counts = new Map<string, number>()
@@ -342,6 +358,25 @@ export default function BananaModal() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1 min-w-[120px] px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm shadow-sm"
             />
+            {/* NSFW 开关 */}
+            <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+              <span className="text-xs text-[var(--text-tertiary)]">NSFW</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showNSFW}
+                onClick={() => setShowNSFW(!showNSFW)}
+                className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
+                  showNSFW ? 'bg-[var(--accent-color)]' : 'bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                    showNSFW ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </label>
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
@@ -449,9 +484,10 @@ function PromptCard({
 }) {
   const [imgError, setImgError] = useState(false)
 
-  // 尝试使用 jsdelivr CDN 代理 GitHub 图片
+  // 尝试使用代理解决图片加载问题
   const getProxiedUrl = (url: string) => {
     if (!url) return ''
+
     // 如果是 GitHub raw 链接，转换为 jsdelivr CDN
     if (url.includes('raw.githubusercontent.com')) {
       return url.replace(
@@ -459,6 +495,31 @@ function PromptCard({
         'https://cdn.jsdelivr.net/gh/$1/$2@$3/'
       )
     }
+
+    // GitHub camo 代理链接无法直接转换，尝试解码原始 URL
+    // camo URL 格式: https://camo.githubusercontent.com/{hash}/68747470733a2f2f...
+    // 后面的十六进制是原始 URL 的编码
+    if (url.includes('camo.githubusercontent.com')) {
+      try {
+        // 提取十六进制编码的部分（最后一个路径段）
+        const match = url.match(/camo\.githubusercontent\.com\/[^/]+\/([0-9a-f]+)/)
+        if (match && match[1]) {
+          const hex = match[1]
+          // 将十六进制转换为字符串
+          let decoded = ''
+          for (let i = 0; i < hex.length; i += 2) {
+            decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16))
+          }
+          // 如果解码成功且是有效 URL，返回解码后的 URL
+          if (decoded.startsWith('http')) {
+            return decoded
+          }
+        }
+      } catch {
+        // 解码失败，返回原 URL
+      }
+    }
+
     return url
   }
 
