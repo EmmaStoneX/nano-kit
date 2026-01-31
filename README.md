@@ -91,6 +91,18 @@ wrangler pages deploy dist --project-name=nano-banana-pro
 | `VITE_DEFAULT_TEXT_MODEL` | 文本模型（可选） | `gpt-4o` |
 | `VITE_DEFAULT_PROVIDER_NAME` | 渠道显示名称 | `我的中转站` |
 
+### R2 云存储配置（可选）
+
+项目支持将生成的图片同步到 Cloudflare R2 存储桶，实现跨设备访问。
+
+1. 在 CF Dashboard 创建 R2 存储桶，命名为 `nano-images`
+2. 在 Pages 项目设置中绑定 R2：
+   - Settings → Functions → R2 bucket bindings
+   - Variable name: `IMAGES_BUCKET`
+   - R2 bucket: `nano-images`
+
+图片会自动按设备 ID 分文件夹存储，无需登录系统。
+
 ## 🙏 鸣谢
 
 - [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills) - 文章配图、XHS 配图创意

@@ -1,5 +1,7 @@
 import { useAppStore } from '../store/appStore'
 import { nativeFetch, escapeHtml, buildOpenAIUrl, buildGeminiUrl } from '../utils/helpers'
+import { imageRateLimiter } from '../utils/rateLimit'
+import { uploadImage } from './r2Storage'
 import type { ImageState } from '../types'
 import * as db from '../utils/db'
 
@@ -28,6 +30,13 @@ export async function sendMessage(text: string, images: ImageState[]) {
     return
   }
 
+  // 检查速率限制
+  const waitTime = imageRateLimiter.getWaitTime()
+  if (waitTime > 0) {
+    showToast(`请求过于频繁，请等待 ${Math.ceil(waitTime / 1000)} 秒`, 'warning')
+    return
+  }
+
   // Single-turn generation: every send starts a fresh session.
   const sessionId = await store.createSession('新对话')
 
@@ -48,6 +57,9 @@ export async function sendMessage(text: string, images: ImageState[]) {
   addActiveGeneration(sessionId)
 
   try {
+    // 等待速率限制
+    await imageRateLimiter.waitForSlot()
+
     let data: any
 
     if (config.type === 'openai') {
@@ -64,12 +76,25 @@ export async function sendMessage(text: string, images: ImageState[]) {
       })
     }
 
+    // 成功后重置错误计数
+    imageRateLimiter.onSuccess()
+
     // Process response
     await processResponse(data, sessionId)
 
   } catch (e: any) {
     console.error('API Error:', e)
     let msg = e.message || '未知错误'
+    const is429 = msg.includes('429') || msg.includes('rate') || msg.includes('Too Many')
+    
+    // 记录错误，调整速率
+    imageRateLimiter.onError(is429)
+    
+    if (is429) {
+      const retryDelay = Math.ceil(imageRateLimiter.getRetryDelay() / 1000)
+      msg = `请求过于频繁 (429)，请等待 ${retryDelay} 秒后重试`
+    }
+    
     try {
       const jsonErr = JSON.parse(e.message)
       if (jsonErr.error?.message) msg = jsonErr.error.message
@@ -322,6 +347,15 @@ async function processResponse(data: any, sessionId: number) {
   if (botHtml) {
     await saveMessage(sessionId, 'bot', 'Image Generated', generatedImages, botHtml)
     bumpGalleryRefreshKey()
+
+    // 同步上传到 R2 云存储（后台执行，不阻塞）
+    for (const imgBase64 of generatedImages) {
+      const fullBase64 = `data:image/png;base64,${imgBase64}`
+      uploadImage(fullBase64, 'Generated image').catch(e => {
+        console.warn('R2 upload failed:', e)
+      })
+    }
+
     store.showToast('生成完成', 'success')
   }
 }

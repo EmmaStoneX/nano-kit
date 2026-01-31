@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/appStore'
 import { buildGeminiUrl, buildOpenAIUrl, downloadImage, nativeFetch } from '../utils/helpers'
+import { imageRateLimiter } from '../utils/rateLimit'
+import { uploadImage } from '../services/r2Storage'
 import { usePageHeader } from '../components/layout/PageHeaderContext'
 
 import {
@@ -114,6 +116,10 @@ export default function XHSImagesPage() {
     await saveMessage(sessionId, 'user', promptText, [], null)
     await saveMessage(sessionId, 'bot', 'Image Generated', [base64], null)
     bumpGalleryRefreshKey()
+
+    // 同步上传到 R2 云存储（后台执行）
+    const fullBase64 = imageData.startsWith('data:') ? imageData : `data:image/png;base64,${imageData}`
+    uploadImage(fullBase64, promptText).catch(e => console.warn('R2 upload failed:', e))
   }
 
   const autoBodyCount = useMemo(() => {
@@ -642,6 +648,13 @@ export default function XHSImagesPage() {
       return
     }
 
+    // 检查速率限制
+    const waitTime = imageRateLimiter.getWaitTime()
+    if (waitTime > 0) {
+      showToast(`请求过于频繁，请等待 ${Math.ceil(waitTime / 1000)} 秒`, 'warning')
+      return
+    }
+
     // 直接使用原始模型名，分辨率和比例通过参数传递
     const model = config.imageModel
 
@@ -652,6 +665,9 @@ export default function XHSImagesPage() {
     })
 
     try {
+      // 等待速率限制
+      await imageRateLimiter.waitForSlot()
+
       let imageData: string | null = null
 
       if (config.type === 'openai') {
@@ -707,6 +723,9 @@ export default function XHSImagesPage() {
 
       if (!imageData) throw new Error('未返回图片数据')
 
+      // 成功后重置错误计数
+      imageRateLimiter.onSuccess()
+
       setBlocks(prev => {
         const next = [...prev]
         next[index] = { ...next[index], imageData }
@@ -720,12 +739,22 @@ export default function XHSImagesPage() {
         showToast('图片生成成功，但保存到作品管理失败', 'warning')
       }
     } catch (e: any) {
+      const msg = e?.message || '未知错误'
+      const is429 = msg.includes('429') || msg.includes('rate') || msg.includes('Too Many')
+      imageRateLimiter.onError(is429)
+
       setBlocks(prev => {
         const next = [...prev]
         next[index] = { ...next[index], imageData: undefined }
         return next
       })
-      showToast(`生成失败: ${e?.message || '未知错误'}`, 'error')
+
+      if (is429) {
+        const retryDelay = Math.ceil(imageRateLimiter.getRetryDelay() / 1000)
+        showToast(`请求过于频繁 (429)，请等待 ${retryDelay} 秒后重试`, 'error')
+      } else {
+        showToast(`生成失败: ${msg}`, 'error')
+      }
     }
   }
 
@@ -976,16 +1005,22 @@ export default function XHSImagesPage() {
               </div>
             ) : (
               <div className="max-w-5xl mx-auto space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm text-[var(--text-secondary)]">
                     已生成 {blocks.length} 张卡片，可编辑提示词后生成图片
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={generateAllImages}
-                      className="px-3 py-2 rounded-xl bg-[var(--success-color)] text-white text-sm shadow-sm hover:opacity-90 transition-opacity"
+                      disabled={blocks.some(b => b.imageData === 'loading')}
+                      className={[
+                        'px-3 py-2 rounded-xl text-sm shadow-sm transition-opacity',
+                        blocks.some(b => b.imageData === 'loading')
+                          ? 'bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] cursor-not-allowed'
+                          : 'bg-[var(--success-color)] text-white hover:opacity-90'
+                      ].join(' ')}
                     >
-                      批量生成图片
+                      {blocks.some(b => b.imageData === 'loading') ? '生成中...' : '批量生成图片'}
                     </button>
                     <button
                       onClick={() => {
@@ -1034,9 +1069,15 @@ export default function XHSImagesPage() {
                             </button>
                             <button
                               onClick={() => generateImage(i)}
-                              className="px-2.5 py-1.5 rounded-xl bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)] transition-colors"
+                              disabled={block.imageData === 'loading'}
+                              className={[
+                                'px-2.5 py-1.5 rounded-xl transition-colors',
+                                block.imageData === 'loading'
+                                  ? 'bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] cursor-not-allowed'
+                                  : 'bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)]'
+                              ].join(' ')}
                             >
-                              {block.imageData && block.imageData !== 'loading' ? '重生成' : '生图'}
+                              {block.imageData === 'loading' ? '生成中...' : block.imageData ? '重生成' : '生图'}
                             </button>
                           </div>
                         </div>
