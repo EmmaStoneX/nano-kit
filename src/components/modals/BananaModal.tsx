@@ -487,8 +487,17 @@ function PromptCard({
   const [imgError, setImgError] = useState(false)
 
   // 尝试使用代理解决图片加载问题
-  const getProxiedUrl = (url: string) => {
+  const getProxiedUrl = (url: string, title?: string) => {
     if (!url) return ''
+
+    // 自定义预览图映射（用于替换失效的原始预览图）
+    const customPreviews: Record<string, string> = {
+      '汽车发动机工作原理3D剖面图': 'https://img.0rzz.ggff.net/gemini_1769849030173.png',
+      '重生之我是1美元钞票的头头': 'https://img.0rzz.ggff.net/gemini_1769849397670.png'
+    }
+    if (title && customPreviews[title]) {
+      return customPreviews[title]
+    }
 
     // 修复已知的 URL 拼写错误
     if (url.includes('afadan.png')) {
@@ -540,7 +549,7 @@ function PromptCard({
     return url
   }
 
-  const previewUrl = item.preview ? getProxiedUrl(item.preview) : ''
+  const previewUrl = item.preview ? getProxiedUrl(item.preview, item.title) : ''
 
   return (
     <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] overflow-hidden shadow-sm">
