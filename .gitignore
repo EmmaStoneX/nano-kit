@@ -19,6 +19,11 @@ pnpm-debug.log*
 # Cloudflare config (contains personal IDs)
 wrangler.toml
 
+# AI assistant configs
+AGENTS.md
+claude.md
+.claude/
+
 # TypeScript incremental builds
 *.tsbuildinfo
 
