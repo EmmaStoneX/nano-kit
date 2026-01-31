@@ -6,7 +6,7 @@ import ChatInput from './ChatInput'
 import { LogoMark } from '../ui/Logo'
 
 export default function ChatArea() {
-  const { messages } = useAppStore()
+  const { messages, setPendingInputText } = useAppStore()
   const chatHistoryRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -16,6 +16,14 @@ export default function ChatArea() {
   }, [messages])
 
   const isEmpty = messages.length === 0
+
+  // 重试处理函数
+  const handleRetry = async (prompt: string) => {
+    if (prompt) {
+      // 将提示词填入输入框
+      setPendingInputText(prompt)
+    }
+  }
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -29,7 +37,11 @@ export default function ChatArea() {
         ) : (
           <div className="max-w-3xl mx-auto">
             {messages.map((msg) => (
-              <MessageItem key={msg.id || msg.timestamp} message={msg} />
+              <MessageItem 
+                key={msg.id || msg.timestamp} 
+                message={msg} 
+                onRetry={handleRetry}
+              />
             ))}
           </div>
         )}

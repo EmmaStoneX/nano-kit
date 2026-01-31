@@ -5,9 +5,10 @@ import type { Message } from '../../types'
 
 interface MessageItemProps {
   message: Message
+  onRetry?: (prompt: string) => void
 }
 
-export default function MessageItem({ message }: MessageItemProps) {
+export default function MessageItem({ message, onRetry }: MessageItemProps) {
   const navigate = useNavigate()
   const { openLightbox, deleteMessage, openSlicerModal, addInputImage, showToast, showConfirm } = useAppStore()
 
@@ -107,6 +108,7 @@ export default function MessageItem({ message }: MessageItemProps) {
               openSlicerModal(src)
               navigate('/editor')
             }}
+            onRetry={onRetry}
           />
         ) : (
           <div className="bg-[var(--bg-secondary)] px-4 py-3 rounded-2xl rounded-bl-md">
@@ -141,13 +143,15 @@ function BotContent({
   onImageClick,
   onDownload,
   onUseAsRef,
-  onSlice
+  onSlice,
+  onRetry
 }: {
   rawHtml: string
   onImageClick: (src: string) => void
   onDownload: (src: string) => void
   onUseAsRef: (src: string) => void
   onSlice: (src: string) => void
+  onRetry?: (prompt: string) => void
 }) {
   // Parse the HTML to extract images and text
   const parser = new DOMParser()
@@ -156,11 +160,31 @@ function BotContent({
   const images = doc.querySelectorAll('img.generated-image')
   const textContent = doc.body.textContent?.trim() || ''
 
-  // Check if it's an error message
-  if (rawHtml.includes('❌ Error')) {
+  // Check if it's an error message with retry button
+  if (rawHtml.includes('error-message') || rawHtml.includes('❌') || rawHtml.includes('⚠️') || rawHtml.includes('🚫') || rawHtml.includes('⏱️') || rawHtml.includes('🌐')) {
+    // Extract prompt from retry button if exists
+    const retryBtn = doc.querySelector('.retry-btn')
+    const prompt = retryBtn?.getAttribute('data-prompt') || ''
+    
+    // Extract error message text
+    const errorDiv = doc.querySelector('.error-message') || doc.body
+    const errorText = errorDiv.textContent?.replace('重新生成', '').trim() || '生成失败'
+    
     return (
-      <div className="bg-[color:rgba(178,58,58,0.12)] text-[var(--danger-color)] px-4 py-3 rounded-2xl rounded-bl-md border border-[color:rgba(178,58,58,0.22)]">
-        <div className="whitespace-pre-wrap break-words text-sm" dangerouslySetInnerHTML={{ __html: rawHtml }} />
+      <div className="bg-[color:rgba(178,58,58,0.08)] px-4 py-3 rounded-2xl rounded-bl-md border border-[color:rgba(178,58,58,0.15)]">
+        <div className="whitespace-pre-wrap break-words text-sm text-[var(--danger-color)] mb-3">
+          {errorText}
+        </div>
+        {onRetry && (
+          <button
+            onClick={() => onRetry(prompt)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[var(--bg-primary)] text-[var(--text-primary)]
+                       rounded-lg border border-[var(--border-color)] shadow-sm hover:bg-[var(--bg-secondary)] transition-colors"
+          >
+            <RetryIcon />
+            重新生成
+          </button>
+        )}
       </div>
     )
   }
@@ -267,6 +291,16 @@ function SliceIcon() {
       <path d="M6 3L6 21" />
       <path d="M18 3L18 21" />
       <path d="M2 12L22 12" />
+    </svg>
+  )
+}
+
+function RetryIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M23 4v6h-6" />
+      <path d="M1 20v-6h6" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
     </svg>
   )
 }

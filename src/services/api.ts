@@ -85,24 +85,83 @@ export async function sendMessage(text: string, images: ImageState[]) {
   } catch (e: any) {
     console.error('API Error:', e)
     let msg = e.message || '未知错误'
-    const is429 = msg.includes('429') || msg.includes('rate') || msg.includes('Too Many')
+    let errorType = 'unknown'
+    const is429 = msg.includes('429') || msg.includes('rate') || msg.includes('Too Many') || msg.includes('Resource exhausted')
+    const isNoResponse = msg.includes('no response') || msg.includes('No response')
+    const isTimeout = msg.includes('timeout') || msg.includes('Timeout') || msg.includes('ETIMEDOUT')
+    const isNetwork = msg.includes('network') || msg.includes('Network') || msg.includes('fetch')
     
     // 记录错误，调整速率
     imageRateLimiter.onError(is429)
     
+    // 友好的错误信息
     if (is429) {
+      errorType = 'rate_limit'
       const retryDelay = Math.ceil(imageRateLimiter.getRetryDelay() / 1000)
-      msg = `请求过于频繁 (429)，请等待 ${retryDelay} 秒后重试`
+      msg = `🚫 请求过于频繁，API 限流中\n请等待 ${retryDelay} 秒后重试`
+    } else if (isNoResponse) {
+      errorType = 'no_response'
+      msg = `⚠️ API 无响应\n上游服务可能暂时不可用，请稍后重试`
+    } else if (isTimeout) {
+      errorType = 'timeout'
+      msg = `⏱️ 请求超时\n网络连接超时，请检查网络后重试`
+    } else if (isNetwork) {
+      errorType = 'network'
+      msg = `🌐 网络错误\n请检查网络连接后重试`
+    } else {
+      // 尝试解析 JSON 错误
+      try {
+        const jsonErr = JSON.parse(e.message)
+        if (jsonErr.error?.message) {
+          msg = `❌ ${jsonErr.error.message}`
+        }
+      } catch (_) {
+        msg = `❌ ${msg}`
+      }
     }
-    
-    try {
-      const jsonErr = JSON.parse(e.message)
-      if (jsonErr.error?.message) msg = jsonErr.error.message
-    } catch (_) {}
 
-    const errorHtml = `<div class="msg-content" style="color:#d93025">❌ Error: ${escapeHtml(msg)}</div>`
+    // 保存错误消息，带重试按钮
+    const errorHtml = `
+      <div class="msg-content error-message" style="padding: 16px;">
+        <div style="color: var(--danger-color); white-space: pre-wrap; margin-bottom: 12px;">${escapeHtml(msg)}</div>
+        <button 
+          class="retry-btn" 
+          data-session-id="${sessionId}"
+          data-prompt="${escapeHtml(text)}"
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+          "
+          onmouseover="this.style.background='var(--bg-secondary)'"
+          onmouseout="this.style.background='var(--bg-tertiary)'"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"/>
+            <path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          重新生成
+        </button>
+      </div>
+    `
     await saveMessage(sessionId, 'bot', 'Error', [], errorHtml)
-    showToast('生成失败: ' + msg, 'error', 3000)
+    
+    // Toast 提示
+    const toastMsg = errorType === 'rate_limit' 
+      ? '请求限流，请稍后重试' 
+      : errorType === 'no_response'
+      ? 'API 无响应，请稍后重试'
+      : '生成失败'
+    showToast(toastMsg, 'error', 3000)
   } finally {
     removeActiveGeneration(sessionId)
   }
