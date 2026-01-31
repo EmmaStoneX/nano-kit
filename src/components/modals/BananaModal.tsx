@@ -513,6 +513,16 @@ function PromptCard({
       )
     }
 
+    // GitHub blob 链接带 ?raw=true，转换为 jsdelivr CDN
+    // 格式: https://github.com/user/repo/blob/branch/path?raw=true
+    if (url.includes('github.com') && url.includes('/blob/') && url.includes('?raw=true')) {
+      const match = url.match(/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)\?raw=true/)
+      if (match) {
+        const [, user, repo, branch, path] = match
+        return `https://cdn.jsdelivr.net/gh/${user}/${repo}@${branch}/${path}`
+      }
+    }
+
     // jsdelivr CDN 链接也修复拼写错误
     if (url.includes('cdn.jsdelivr.net') && url.includes('afadan.png')) {
       return url.replace('afadan.png', 'afanda.png')
