@@ -30,7 +30,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // 未登录用户，检查 IP 使用次数
+    // 未登录用户，检查 IP + deviceId 使用次数
     if (!context.env.USAGE_LIMIT) {
       return new Response(
         JSON.stringify({
@@ -44,8 +44,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     }
 
     const ip = context.request.headers.get('CF-Connecting-IP') || 'unknown'
+    const url = new URL(context.request.url)
+    const deviceId = url.searchParams.get('deviceId') || 'unknown'
     const date = new Date().toISOString().split('T')[0]
-    const key = `ip:${ip}:${date}`
+    
+    // 组合 IP + deviceId 作为限流 key，防止单独绕过
+    const key = `usage:${ip}:${deviceId}:${date}`
 
     const usage = (await context.env.USAGE_LIMIT.get(key, 'json')) as { count: number } | null
     const count = usage?.count || 0
@@ -96,8 +100,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const ip = context.request.headers.get('CF-Connecting-IP') || 'unknown'
+    const body = (await context.request.json()) as { deviceId?: string }
+    const deviceId = body.deviceId || 'unknown'
     const date = new Date().toISOString().split('T')[0]
-    const key = `ip:${ip}:${date}`
+    
+    // 组合 IP + deviceId 作为限流 key
+    const key = `usage:${ip}:${deviceId}:${date}`
 
     const usage = (await context.env.USAGE_LIMIT.get(key, 'json')) as { count: number } | null
     const count = usage?.count || 0

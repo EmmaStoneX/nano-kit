@@ -1,5 +1,5 @@
-// 使用限制状态管理
 import { StateCreator } from 'zustand'
+import { getDeviceId } from '../../services/r2Storage'
 
 export interface UsageState {
   remaining: number
@@ -61,7 +61,8 @@ export const createUsageSlice: StateCreator<
         headers['Authorization'] = `Bearer ${auth.token}`
       }
 
-      const response = await fetch(USAGE_API, { headers })
+      const deviceId = getDeviceId()
+      const response = await fetch(`${USAGE_API}?deviceId=${deviceId}`, { headers })
       if (response.ok) {
         const data = await response.json()
         set({
@@ -110,9 +111,11 @@ export const createUsageSlice: StateCreator<
         headers['Authorization'] = `Bearer ${auth.token}`
       }
 
+      const deviceId = getDeviceId()
       const response = await fetch(USAGE_API, {
         method: 'POST',
-        headers
+        headers,
+        body: JSON.stringify({ deviceId })
       })
 
       const data = await response.json()
