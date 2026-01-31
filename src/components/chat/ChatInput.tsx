@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect, DragEvent } from 'react'
 import { useAppStore } from '../../store/appStore'
 import { compressImage } from '../../utils/helpers'
+import { trackImageGenerate, trackReferenceImageUpload, trackFeatureUse } from '../../utils/analytics'
 
 export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' | 'floating' }) {
   const {
@@ -74,6 +75,7 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
         const file = item.getAsFile()
         if (file) {
           await handleFiles([file])
+          trackReferenceImageUpload('paste')
           showToast('已粘贴图片', 'success')
         }
       }
@@ -103,6 +105,7 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
     const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
     if (files.length > 0) {
       await handleFiles(files)
+      trackReferenceImageUpload('drag')
       showToast(`已添加 ${files.length} 张图片`, 'success')
     }
   }
@@ -110,6 +113,9 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
   const handleSend = async () => {
     const trimmedText = text.trim()
     if (!trimmedText && inputImages.length === 0) return
+
+    // 埋点：图片生成
+    trackImageGenerate('chat', resolution, aspectRatio)
 
     const { sendMessage } = await import('../../services/api')
     setText('')
@@ -210,7 +216,10 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
               {/* 添加图片按钮 */}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  trackReferenceImageUpload('click')
+                  fileInputRef.current?.click()
+                }}
                 className="flex items-center justify-center h-7 w-7 text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg transition-colors bg-[var(--bg-primary)]/50 backdrop-blur-sm"
                 title="添加参考图"
               >
@@ -222,7 +231,10 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
               {/* 提示词按钮 */}
               <button
                 type="button"
-                onClick={openBananaModal}
+                onClick={() => {
+                  trackFeatureUse('prompt_library')
+                  openBananaModal()
+                }}
                 className="flex items-center gap-1 h-7 px-2.5 text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg transition-colors text-xs whitespace-nowrap bg-[var(--bg-primary)]/50 backdrop-blur-sm"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

@@ -1,5 +1,7 @@
 // 登录提示弹窗 - 当用户达到免费次数限制时显示
 import { useAppStore } from '../../store/appStore'
+import { trackLoginClick, trackUsageLimitReached } from '../../utils/analytics'
+import { useEffect } from 'react'
 
 interface LoginPromptProps {
   isOpen: boolean
@@ -7,11 +9,19 @@ interface LoginPromptProps {
 }
 
 export default function LoginPrompt({ isOpen, onClose }: LoginPromptProps) {
-  const { login } = useAppStore()
+  const { login, usage } = useAppStore()
+
+  // 弹窗打开时追踪
+  useEffect(() => {
+    if (isOpen) {
+      trackUsageLimitReached(usage.remaining)
+    }
+  }, [isOpen, usage.remaining])
 
   if (!isOpen) return null
 
   const handleLogin = () => {
+    trackLoginClick('limit_prompt')
     login()
     onClose()
   }

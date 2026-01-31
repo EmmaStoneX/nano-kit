@@ -4,6 +4,7 @@ import Modal from '../ui/Modal'
 import { nativeFetch } from '../../utils/helpers'
 import type { BananaPrompt, CustomPrompt } from '../../types'
 import { getLocalPrompts, saveLocalPrompts, saveCloudPrompt } from '../../services/kvStorage'
+import { trackPromptSelect, trackPromptSearch, trackPromptSave } from '../../utils/analytics'
 
 const URLS = [
   'https://raw.githubusercontent.com/glidea/banana-prompt-quicker/refs/heads/main/prompts.json',
@@ -171,7 +172,10 @@ export default function BananaModal() {
     })
   }
 
-  const handleUse = (text: string) => {
+  const handleUse = (text: string, item?: PromptListItem) => {
+    if (item) {
+      trackPromptSelect(item.category || 'unknown', item.id)
+    }
     setPendingInputText(text)
     closeBananaModal()
     showToast('提示词已填充', 'success')
@@ -206,6 +210,7 @@ export default function BananaModal() {
     // 后台同步到云端
     saveCloudPrompt(newPrompt).catch(e => console.warn('Cloud sync failed:', e))
     loadSavedPrompts()
+    trackPromptSave()
     showToast('已保存到我的提示词', 'success')
   }
 
@@ -356,7 +361,15 @@ export default function BananaModal() {
                 type="text"
                 placeholder="搜索..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  // 延迟追踪搜索
+                  if (e.target.value.length > 2) {
+                    setTimeout(() => {
+                      trackPromptSearch(e.target.value, filteredItems.length)
+                    }, 500)
+                  }
+                }}
                 className="flex-1 min-w-0 px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm shadow-sm"
               />
               {/* NSFW 开关 */}
@@ -479,7 +492,7 @@ function PromptCard({
 }: {
   item: PromptListItem
   onCopy: (text: string) => void
-  onUse: (text: string) => void
+  onUse: (text: string, item: PromptListItem) => void
   onSave: (item: PromptListItem) => void
   saveDisabled: boolean
   onTagClick: (tag: string) => void
@@ -605,7 +618,7 @@ function PromptCard({
             复制
           </button>
           <button
-            onClick={() => onUse(item.prompt)}
+            onClick={() => onUse(item.prompt, item)}
             className="flex-1 px-2 py-1.5 text-xs bg-[var(--accent-color)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
           >
             使用

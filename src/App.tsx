@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import Toast from './components/ui/Toast'
 import Lightbox from './components/ui/Lightbox'
 import GlobalLoading from './components/ui/GlobalLoading'
+import { trackSessionStart, trackUTMParams } from './utils/analytics'
 
 function App() {
   const { theme, initTheme, initProviders, initDB, restoreAuth, handleAuthCallback, refreshUsage } = useAppStore()
@@ -11,6 +12,9 @@ function App() {
   useEffect(() => {
     initTheme()
     initProviders()
+    // 初始化分析追踪
+    trackSessionStart()
+    trackUTMParams()
   }, [initTheme, initProviders])
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 // 用户菜单 - 显示登录状态和用户头像
 import { useState, useRef, useEffect } from 'react'
 import { useAppStore } from '../../store/appStore'
+import { trackLoginClick, trackLogout } from '../../utils/analytics'
 
 export default function UserMenu() {
   const { auth, login, logout, authLoading, usage } = useAppStore()
@@ -27,6 +28,17 @@ export default function UserMenu() {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [])
 
+  const handleLogin = () => {
+    trackLoginClick('header')
+    login()
+  }
+
+  const handleLogout = () => {
+    trackLogout()
+    logout()
+    setIsOpen(false)
+  }
+
   if (authLoading) {
     return <div className="w-8 h-8 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
   }
@@ -35,7 +47,7 @@ export default function UserMenu() {
   if (!auth.isAuthenticated) {
     return (
       <button
-        onClick={login}
+        onClick={handleLogin}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] transition-colors"
         title="使用 GitHub 登录"
       >
@@ -93,10 +105,7 @@ export default function UserMenu() {
 
           {/* 退出按钮 */}
           <button
-            onClick={() => {
-              logout()
-              setIsOpen(false)
-            }}
+            onClick={handleLogout}
             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
