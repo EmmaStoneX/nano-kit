@@ -249,9 +249,9 @@ export default function GalleryMasonry({
 
   return (
     <div className={contentPaddingBottomClassName || ''}>
-      <div className="columns-1 sm:columns-2 lg:columns-3 [column-gap:1rem]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.map((item) => (
-          <div key={item.id} className="mb-4 w-full inline-block [break-inside:avoid]">
+          <div key={item.id} className="w-full">
             <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden shadow-sm">
               {item.type === 'generating' ? (
                 <div className="relative w-full aspect-square bg-[var(--bg-tertiary)] overflow-hidden">
