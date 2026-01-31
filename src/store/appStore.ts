@@ -5,6 +5,8 @@ import { createSessionSlice, type SessionSlice } from './slices/sessionSlice'
 import { createMessageSlice, type MessageSlice } from './slices/messageSlice'
 import { createInputSlice, type InputSlice } from './slices/inputSlice'
 import { createModalSlice, type ModalSlice } from './slices/modalSlice'
+import { createAuthSlice, type AuthSlice } from './slices/authSlice'
+import { createUsageSlice, type UsageSlice } from './slices/usageSlice'
 
 export type AppState =
   UISlice &
@@ -12,7 +14,9 @@ export type AppState =
   SessionSlice &
   MessageSlice &
   InputSlice &
-  ModalSlice
+  ModalSlice &
+  AuthSlice &
+  UsageSlice
 
 export const useAppStore = create<AppState>()((...args) => ({
   ...createUISlice(...args),
@@ -20,5 +24,7 @@ export const useAppStore = create<AppState>()((...args) => ({
   ...createSessionSlice(...args),
   ...createMessageSlice(...args),
   ...createInputSlice(...args),
-  ...createModalSlice(...args)
+  ...createModalSlice(...args),
+  ...createAuthSlice(...args),
+  ...createUsageSlice(...args)
 }))

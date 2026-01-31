@@ -1,5 +1,6 @@
 import { useAppStore } from '../../store/appStore'
 import { usePageHeader } from './PageHeaderContext'
+import UserMenu from '../auth/UserMenu'
 
 export default function DesktopHeader() {
   const { theme, toggleTheme } = useAppStore()
@@ -27,6 +28,7 @@ export default function DesktopHeader() {
           </div>
         )}
         {header?.actions && <div className="h-6 w-px bg-[var(--border-color)]" aria-hidden="true" />}
+        <UserMenu />
         <a
           href="https://github.com/EmmaStoneX/nano-kit"
           target="_blank"
