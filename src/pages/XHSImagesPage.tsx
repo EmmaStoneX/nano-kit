@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/appStore'
-import { buildDynamicImageModel, buildGeminiUrl, buildOpenAIUrl, downloadImage, nativeFetch } from '../utils/helpers'
+import { buildGeminiUrl, buildOpenAIUrl, downloadImage, nativeFetch } from '../utils/helpers'
 import { usePageHeader } from '../components/layout/PageHeaderContext'
 
 import {
@@ -642,7 +642,8 @@ export default function XHSImagesPage() {
       return
     }
 
-    const model = buildDynamicImageModel(config.imageModel, quality, ratio, config.enableModelSuffix ?? true)
+    // 直接使用原始模型名，分辨率和比例通过参数传递
+    const model = config.imageModel
 
     setBlocks(prev => {
       const next = [...prev]

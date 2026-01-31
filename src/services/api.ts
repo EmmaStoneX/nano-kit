@@ -1,5 +1,5 @@
 import { useAppStore } from '../store/appStore'
-import { nativeFetch, escapeHtml, buildDynamicImageModel, buildOpenAIUrl, buildGeminiUrl } from '../utils/helpers'
+import { nativeFetch, escapeHtml, buildOpenAIUrl, buildGeminiUrl } from '../utils/helpers'
 import type { ImageState } from '../types'
 import * as db from '../utils/db'
 
@@ -89,8 +89,9 @@ async function callOpenAIAPI(
   imagesBase64: string[],
   options: any
 ) {
-  const { resolution, aspectRatio, enableModelSuffix = true } = options
-  const model = buildDynamicImageModel(config.imageModel, resolution, aspectRatio, enableModelSuffix)
+  const { resolution, aspectRatio } = options
+  // 直接使用原始模型名，分辨率和比例通过参数传递
+  const model = config.imageModel
 
   const messages: any[] = []
 
@@ -153,8 +154,9 @@ async function callGeminiAPI(
   imagesBase64: string[],
   options: any
 ) {
-  const { resolution, aspectRatio, enableModelSuffix = true } = options
-  const model = buildDynamicImageModel(config.imageModel, resolution, aspectRatio, enableModelSuffix)
+  const { resolution, aspectRatio } = options
+  // 直接使用原始模型名，分辨率和比例通过 imageConfig 参数传递
+  const model = config.imageModel
 
   const contents: any[] = []
 

@@ -37,7 +37,7 @@ export default function DesktopHeader() {
           <BookIcon />
         </a>
         <a
-          href="https://github.com/liujuntao123/nano-kit"
+          href="https://github.com/EmmaStoneX/nano-kit"
           target="_blank"
           rel="noopener noreferrer"
           className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)] shadow-sm hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
