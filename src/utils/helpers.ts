@@ -178,6 +178,9 @@ export function downloadImage(base64Data: string, filename: string): void {
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
   const isLocalFile = window.location.protocol === 'file:'
 
+  // 对 filename 进行转义，防止 XSS
+  const safeFilename = escapeHtml(filename)
+
   if (isIOS || isSafari || isLocalFile) {
     const newWindow = window.open()
     if (newWindow) {
@@ -186,7 +189,7 @@ export function downloadImage(base64Data: string, filename: string): void {
         <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${filename}</title>
+          <title>${safeFilename}</title>
           <style>
             body { margin: 0; padding: 20px; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
             img { max-width: 100%; height: auto; border-radius: 8px; }
@@ -194,7 +197,7 @@ export function downloadImage(base64Data: string, filename: string): void {
           </style>
         </head>
         <body>
-          <img src="${base64Data}" alt="${filename}">
+          <img src="${base64Data}" alt="${safeFilename}">
           <div class="tip">长按图片保存</div>
         </body>
         </html>
