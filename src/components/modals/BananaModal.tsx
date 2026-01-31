@@ -351,32 +351,34 @@ export default function BananaModal() {
                 {tab.label}
               </button>
             ))}
-            <input
-              type="text"
-              placeholder="搜索提示词..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 min-w-[120px] px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm shadow-sm"
-            />
-            {/* NSFW 开关 */}
-            <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
-              <span className="text-xs text-[var(--text-tertiary)]">NSFW</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={showNSFW}
-                onClick={() => setShowNSFW(!showNSFW)}
-                className={`relative w-10 h-6 rounded-full transition-colors duration-200 ${
-                  showNSFW ? 'bg-[var(--accent-color)]' : 'bg-[var(--bg-tertiary)]'
-                }`}
-              >
-                <span
-                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
-                    showNSFW ? 'translate-x-4' : 'translate-x-0'
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <input
+                type="text"
+                placeholder="搜索..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 min-w-0 px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm shadow-sm"
+              />
+              {/* NSFW 开关 */}
+              <label className="flex items-center gap-1 cursor-pointer select-none shrink-0">
+                <span className="text-xs text-[var(--text-tertiary)]">NSFW</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={showNSFW}
+                  onClick={() => setShowNSFW(!showNSFW)}
+                  className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${
+                    showNSFW ? 'bg-[var(--accent-color)]' : 'bg-[var(--bg-tertiary)]'
                   }`}
-                />
-              </button>
-            </label>
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                      showNSFW ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </label>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
