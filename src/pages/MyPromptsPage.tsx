@@ -3,6 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/appStore'
 import type { CustomPrompt } from '../types'
 import { usePageHeader } from '../components/layout/PageHeaderContext'
+import {
+  getLocalPrompts,
+  saveLocalPrompts,
+  saveCloudPrompt,
+  deleteCloudPrompt,
+  initPromptSync
+} from '../services/kvStorage'
 
 export default function MyPromptsPage() {
   const navigate = useNavigate()
@@ -17,17 +24,15 @@ export default function MyPromptsPage() {
   const [formData, setFormData] = useState({ title: '', content: '' })
 
   const loadPrompts = useCallback(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('custom_prompts') || '[]')
-      setPrompts(Array.isArray(saved) ? saved : [])
-    } catch (e) {
-      console.error('Failed to load prompts:', e)
-      setPrompts([])
-    }
+    const saved = getLocalPrompts()
+    setPrompts(saved)
   }, [])
 
   useEffect(() => {
-    loadPrompts()
+    // 初始化云端同步
+    initPromptSync().then(() => {
+      loadPrompts()
+    })
   }, [loadPrompts])
 
   const headerActions = useMemo(() => (
@@ -52,7 +57,7 @@ export default function MyPromptsPage() {
   }, [setHeader, headerActions])
 
   const savePrompts = (newPrompts: CustomPrompt[]) => {
-    localStorage.setItem('custom_prompts', JSON.stringify(newPrompts))
+    saveLocalPrompts(newPrompts)
     setPrompts(newPrompts)
   }
 
@@ -68,12 +73,14 @@ export default function MyPromptsPage() {
     }
 
     if (editingId) {
-      const updated = prompts.map(p =>
-        p.id === editingId
-          ? { ...p, title: formData.title, content: formData.content, updatedAt: Date.now() }
-          : p
-      )
-      savePrompts(updated)
+      const updatedPrompt = prompts.find(p => p.id === editingId)
+      if (updatedPrompt) {
+        const updated = { ...updatedPrompt, title: formData.title, content: formData.content, updatedAt: Date.now() }
+        const newPrompts = prompts.map(p => p.id === editingId ? updated : p)
+        savePrompts(newPrompts)
+        // 后台同步到云端
+        saveCloudPrompt(updated).catch(e => console.warn('Cloud sync failed:', e))
+      }
       showToast('更新成功', 'success')
       clearForm()
       return
@@ -87,6 +94,8 @@ export default function MyPromptsPage() {
       updatedAt: Date.now()
     }
     savePrompts([newPrompt, ...prompts])
+    // 后台同步到云端
+    saveCloudPrompt(newPrompt).catch(e => console.warn('Cloud sync failed:', e))
     showToast('保存成功', 'success')
     clearForm()
   }
@@ -98,6 +107,8 @@ export default function MyPromptsPage() {
       type: 'danger',
       onConfirm: () => {
         savePrompts(prompts.filter(p => p.id !== id))
+        // 后台同步删除云端
+        deleteCloudPrompt(id).catch(e => console.warn('Cloud delete failed:', e))
         showToast('已删除', 'success')
       }
     })

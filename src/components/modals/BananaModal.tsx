@@ -3,6 +3,7 @@ import { useAppStore } from '../../store/appStore'
 import Modal from '../ui/Modal'
 import { nativeFetch } from '../../utils/helpers'
 import type { BananaPrompt, CustomPrompt } from '../../types'
+import { getLocalPrompts, saveLocalPrompts, saveCloudPrompt } from '../../services/kvStorage'
 
 const URLS = [
   'https://raw.githubusercontent.com/glidea/banana-prompt-quicker/refs/heads/main/prompts.json',
@@ -111,14 +112,8 @@ export default function BananaModal() {
   }, [bananaModalOpen])
 
   const loadSavedPrompts = () => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('custom_prompts') || '[]')
-      const arr = Array.isArray(saved) ? saved : []
-      setSavedPrompts(arr)
-    } catch (e) {
-      console.error('Failed to load saved prompts:', e)
-      setSavedPrompts([])
-    }
+    const saved = getLocalPrompts()
+    setSavedPrompts(saved)
   }
 
   const fetchData = async () => {
@@ -170,37 +165,35 @@ export default function BananaModal() {
   }
 
   const handleSaveToCustom = (item: PromptListItem) => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('custom_prompts') || '[]')
-      const exists = saved.some((p: any) =>
-        p?.title === item.title ||
-        p?.content === item.prompt ||
-        p?.prompt === item.prompt
-      )
+    const saved = getLocalPrompts()
+    const exists = saved.some((p: any) =>
+      p?.title === item.title ||
+      p?.content === item.prompt ||
+      p?.prompt === item.prompt
+    )
 
-      if (exists) {
-        showToast('该提示词已存在', 'warning')
-        return
-      }
-
-      saved.unshift({
-        id: 'prompt_' + Date.now(),
-        title: item.title,
-        content: item.prompt,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        category: item.category,
-        mode: item.mode,
-        preview: item.preview,
-        author: item.author
-      })
-
-      localStorage.setItem('custom_prompts', JSON.stringify(saved))
-      loadSavedPrompts()
-      showToast('已保存到我的提示词', 'success')
-    } catch (e) {
-      showToast('保存失败', 'error')
+    if (exists) {
+      showToast('该提示词已存在', 'warning')
+      return
     }
+
+    const newPrompt: CustomPrompt = {
+      id: 'prompt_' + Date.now(),
+      title: item.title,
+      content: item.prompt,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      category: item.category,
+      mode: item.mode,
+      preview: item.preview,
+      author: item.author
+    }
+
+    saveLocalPrompts([newPrompt, ...saved])
+    // 后台同步到云端
+    saveCloudPrompt(newPrompt).catch(e => console.warn('Cloud sync failed:', e))
+    loadSavedPrompts()
+    showToast('已保存到我的提示词', 'success')
   }
 
   const savedPromptIndex = useMemo(() => {

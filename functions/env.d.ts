@@ -2,4 +2,5 @@
 
 interface Env {
   IMAGES_BUCKET: R2Bucket
+  PROMPTS_KV: KVNamespace
 }

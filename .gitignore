@@ -16,6 +16,9 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 
+# Cloudflare config (contains personal IDs)
+wrangler.toml
+
 # TypeScript incremental builds
 *.tsbuildinfo
 

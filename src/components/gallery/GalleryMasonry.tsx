@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../store/appStore'
 import { downloadImage, guessImageMimeType } from '../../utils/helpers'
 import * as db from '../../utils/db'
-import type { Message } from '../../types'
+import type { Message, CustomPrompt } from '../../types'
+import { getLocalPrompts, saveLocalPrompts, saveCloudPrompt } from '../../services/kvStorage'
 
 type ReadyGalleryItem = {
   type: 'ready'
@@ -190,38 +191,34 @@ export default function GalleryMasonry({
       return
     }
 
-    try {
-      const saved = JSON.parse(localStorage.getItem('custom_prompts') || '[]')
-      const arr = Array.isArray(saved) ? saved : []
+    const saved = getLocalPrompts()
 
-      const exists = arr.some((p: any) => {
-        const content = (p?.content ?? p?.prompt ?? '').toString().trim()
-        return content === text
-      })
+    const exists = saved.some((p: any) => {
+      const content = (p?.content ?? p?.prompt ?? '').toString().trim()
+      return content === text
+    })
 
-      if (exists) {
-        showToast('该提示词已在收藏中', 'warning')
-        return
-      }
-
-      const titleBase = text.split('\n')[0]?.trim() || '画廊收藏'
-      const title = titleBase.length > 24 ? `${titleBase.slice(0, 24)}...` : titleBase
-      const now = Date.now()
-
-      arr.unshift({
-        id: `prompt_${now}`,
-        title,
-        content: text,
-        createdAt: now,
-        updatedAt: now
-      })
-
-      localStorage.setItem('custom_prompts', JSON.stringify(arr))
-      showToast('已收藏到我的提示词', 'success')
-    } catch (e) {
-      console.error('Failed to save prompt:', e)
-      showToast('收藏失败', 'error')
+    if (exists) {
+      showToast('该提示词已在收藏中', 'warning')
+      return
     }
+
+    const titleBase = text.split('\n')[0]?.trim() || '画廊收藏'
+    const title = titleBase.length > 24 ? `${titleBase.slice(0, 24)}...` : titleBase
+    const now = Date.now()
+
+    const newPrompt: CustomPrompt = {
+      id: `prompt_${now}`,
+      title,
+      content: text,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    saveLocalPrompts([newPrompt, ...saved])
+    // 后台同步到云端
+    saveCloudPrompt(newPrompt).catch(e => console.warn('Cloud sync failed:', e))
+    showToast('已收藏到我的提示词', 'success')
   }
 
   if (loading && items.length === 0) {
