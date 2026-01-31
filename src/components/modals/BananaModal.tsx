@@ -490,12 +490,22 @@ function PromptCard({
   const getProxiedUrl = (url: string) => {
     if (!url) return ''
 
+    // 修复已知的 URL 拼写错误
+    if (url.includes('afadan.png')) {
+      url = url.replace('afadan.png', 'afanda.png')
+    }
+
     // 如果是 GitHub raw 链接，转换为 jsdelivr CDN
     if (url.includes('raw.githubusercontent.com')) {
       return url.replace(
         /https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\//,
         'https://cdn.jsdelivr.net/gh/$1/$2@$3/'
       )
+    }
+
+    // jsdelivr CDN 链接也修复拼写错误
+    if (url.includes('cdn.jsdelivr.net') && url.includes('afadan.png')) {
+      return url.replace('afadan.png', 'afanda.png')
     }
 
     // GitHub camo 代理链接无法直接转换，尝试解码原始 URL
