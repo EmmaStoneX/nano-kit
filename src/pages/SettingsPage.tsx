@@ -125,18 +125,6 @@ export default function SettingsPage() {
         </div>
 
         <Section title="API 渠道">
-          <div className="mb-3 px-3 py-2 rounded-xl bg-[var(--highlight)] border border-[var(--border-color)] text-sm">
-            <span className="text-[var(--text-tertiary)]">💡 Tips: </span>
-            <a
-              href="https://foxcode.rjj.cc/auth/register?aff=8LR7"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--link-color)] hover:underline"
-            >
-              高性价比 API 站
-            </a>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-[320px,1fr] gap-4">
             {/* Left: channel list */}
             <div className="space-y-3">
