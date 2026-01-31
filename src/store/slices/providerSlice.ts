@@ -19,6 +19,29 @@ const PROVIDERS_KEY = 'gemini_providers'
 const ACTIVE_IMAGE_KEY = 'gemini_active_provider'
 const ACTIVE_TEXT_KEY = 'gemini_active_text_provider'
 
+// 从环境变量获取预置配置
+const getEnvDefaultProvider = (): Provider | null => {
+  const host = import.meta.env.VITE_DEFAULT_API_HOST
+  const key = import.meta.env.VITE_DEFAULT_API_KEY
+  const imageModel = import.meta.env.VITE_DEFAULT_IMAGE_MODEL
+
+  if (!host || !key || !imageModel) return null
+
+  return {
+    id: 'env_default',
+    name: import.meta.env.VITE_DEFAULT_PROVIDER_NAME || '默认渠道',
+    type: (import.meta.env.VITE_DEFAULT_API_TYPE as 'gemini' | 'openai') || 'openai',
+    host,
+    key,
+    imageModel,
+    textModel: import.meta.env.VITE_DEFAULT_TEXT_MODEL || '',
+    capabilities: {
+      image: true,
+      text: !!import.meta.env.VITE_DEFAULT_TEXT_MODEL
+    }
+  }
+}
+
 const normalizeProviders = (rawProviders: any[]) => {
   let didMutate = false
   const providers = rawProviders
@@ -91,6 +114,13 @@ export const createProviderSlice: StateCreator<AppState, [], [], ProviderSlice> 
               capabilities: { image: true, text: false }
             }
           ]
+          didMutate = true
+        }
+
+        // 注入环境变量预置的默认渠道
+        const envProvider = getEnvDefaultProvider()
+        if (envProvider && !providers.find(p => p.id === 'env_default')) {
+          providers = [envProvider, ...providers]
           didMutate = true
         }
 

@@ -41,6 +41,56 @@ npm run dev    # 启动开发
 npm run build  # 构建产物，部署 dist 目录即可
 ```
 
+## 🚀 一键部署到 Cloudflare Pages
+
+### 方式一：通过 GitHub 自动部署
+
+1. Fork 本仓库到你的 GitHub
+2. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/) → Pages → Create a project
+3. 连接你的 GitHub 仓库
+4. 构建设置：
+   - Framework preset: `Vite`
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+5. 在 Environment variables 中添加你的 API 配置：
+   ```
+   VITE_DEFAULT_API_TYPE=openai
+   VITE_DEFAULT_API_HOST=https://your-proxy.example.com
+   VITE_DEFAULT_API_KEY=sk-your-api-key
+   VITE_DEFAULT_IMAGE_MODEL=gpt-image-1
+   VITE_DEFAULT_PROVIDER_NAME=默认渠道
+   ```
+6. 点击 Deploy，完成！
+
+### 方式二：通过 Wrangler CLI 部署
+
+```bash
+# 安装 wrangler
+npm install -g wrangler
+
+# 登录 Cloudflare
+wrangler login
+
+# 创建 .env.local 文件并填入你的配置
+cp .env.example .env.local
+# 编辑 .env.local 填入你的中转站地址和 key
+
+# 构建并部署
+npm run build
+wrangler pages deploy dist --project-name=nano-banana-pro
+```
+
+### 环境变量说明
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `VITE_DEFAULT_API_TYPE` | API 类型 | `openai` 或 `gemini` |
+| `VITE_DEFAULT_API_HOST` | 中转站地址 | `https://api.example.com` |
+| `VITE_DEFAULT_API_KEY` | API Key | `sk-xxx` |
+| `VITE_DEFAULT_IMAGE_MODEL` | 绘图模型 | `gpt-image-1` |
+| `VITE_DEFAULT_TEXT_MODEL` | 文本模型（可选） | `gpt-4o` |
+| `VITE_DEFAULT_PROVIDER_NAME` | 渠道显示名称 | `我的中转站` |
+
 ## 🙏 鸣谢
 
 - [JimLiu/baoyu-skills](https://github.com/JimLiu/baoyu-skills) - 文章配图、XHS 配图创意

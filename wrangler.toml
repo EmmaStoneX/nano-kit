@@ -1,0 +1,14 @@
+# Cloudflare Pages 配置
+name = "nano-banana-pro"
+compatibility_date = "2024-01-01"
+
+# Pages 项目配置
+pages_build_output_dir = "dist"
+
+# 环境变量（部署时在 CF Dashboard 中设置，或使用 .env 文件）
+# [vars]
+# VITE_DEFAULT_API_TYPE = "openai"
+# VITE_DEFAULT_API_HOST = "https://your-proxy.example.com"
+# VITE_DEFAULT_API_KEY = "sk-your-api-key"
+# VITE_DEFAULT_IMAGE_MODEL = "gpt-image-1"
+# VITE_DEFAULT_PROVIDER_NAME = "默认渠道"
