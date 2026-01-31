@@ -493,7 +493,8 @@ function PromptCard({
     // 自定义预览图映射（用于替换失效的原始预览图）
     const customPreviews: Record<string, string> = {
       '汽车发动机工作原理3D剖面图': 'https://img.0rzz.ggff.net/gemini_1769849030173.png',
-      '重生之我是1美元钞票的头头': 'https://img.0rzz.ggff.net/gemini_1769849397670.png'
+      '重生之我是1美元钞票的头头': 'https://img.0rzz.ggff.net/gemini_1769849397670.png',
+      '换装越南奥黛风艺术照': 'https://img.0rzz.ggff.net/gemini_1769849936313.png'
     }
     if (title && customPreviews[title]) {
       return customPreviews[title]
