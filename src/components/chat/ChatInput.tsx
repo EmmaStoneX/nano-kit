@@ -152,50 +152,41 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
       >
         <div className="flex flex-col w-full max-h-[500px] overflow-y-auto">
           {/* Image Previews */}
-          <div className="flex flex-wrap gap-3 px-5 pt-5">
-            {inputImages.map((img, i) => (
-              <div
-                key={i}
-                className="relative group/img w-20 h-20 rounded-xl overflow-hidden border border-[var(--border-color)] shadow-sm bg-[var(--bg-secondary)]"
-              >
-                <img src={img.preview} className="w-full h-full object-cover" alt="" />
-                <button
-                  type="button"
-                  onClick={() => removeInputImage(i)}
-                  className="absolute top-1 right-1 bg-black/50 hover:bg-black text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
-                  aria-label="Remove image"
+          {inputImages.length > 0 && (
+            <div className="flex flex-wrap gap-3 px-5 pt-5">
+              {inputImages.map((img, i) => (
+                <div
+                  key={i}
+                  className="relative group/img w-20 h-20 rounded-xl overflow-hidden border border-[var(--border-color)] shadow-sm bg-[var(--bg-secondary)]"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-            ))}
+                  <img src={img.preview} className="w-full h-full object-cover" alt="" />
+                  <button
+                    type="button"
+                    onClick={() => removeInputImage(i)}
+                    className="absolute top-1 right-1 bg-black/50 hover:bg-black text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                    aria-label="Remove image"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-20 h-20 rounded-xl border-2 border-dashed border-[var(--border-color)] flex items-center justify-center text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] transition-colors"
-              title="添加图片"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-            </button>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => e.target.files && handleFiles(e.target.files)}
-            />
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          />
 
           {/* Text input */}
           <textarea
@@ -208,7 +199,7 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder="给 AI 发送指令，支持粘贴或拖拽图片..."
-            className="w-full min-h-[120px] bg-transparent border-none outline-none focus:ring-0 focus-visible:outline-none resize-none leading-relaxed px-5 py-4 pb-16 text-[16px] sm:text-[18px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)]"
+            className={`w-full min-h-[120px] bg-transparent border-none outline-none focus:ring-0 focus-visible:outline-none resize-none leading-relaxed px-5 py-4 pb-16 text-[16px] sm:text-[18px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] ${inputImages.length === 0 ? 'pt-5' : ''}`}
           />
         </div>
 
@@ -216,6 +207,17 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/90 to-transparent pointer-events-none">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-1.5 pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center w-8 h-8 text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full transition-colors bg-[var(--bg-primary)]/50 backdrop-blur-sm"
+                title="添加参考图"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </button>
+
               <button
                 type="button"
                 onClick={openBananaModal}

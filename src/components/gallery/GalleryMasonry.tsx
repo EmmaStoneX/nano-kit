@@ -462,26 +462,26 @@ function PromptBlock({ prompt }: { prompt: string }) {
   const showToggle = isOverflowing || expanded
 
   return (
-    <div>
+    <div className="overflow-hidden">
       <div
         ref={textRef}
         className={[
-          'text-xs text-[var(--text-secondary)] whitespace-pre-wrap break-words font-serif',
-          expanded ? 'max-h-60 overflow-y-auto pr-1' : 'max-h-24 overflow-hidden',
+          'text-xs text-[var(--text-secondary)] whitespace-pre-wrap break-words break-all font-serif',
+          expanded ? 'max-h-60 overflow-y-auto pr-1' : 'max-h-20 overflow-hidden',
           showToggle && !expanded ? 'relative' : ''
         ].join(' ')}
         title={safePrompt}
       >
         {safePrompt}
         {showToggle && !expanded && (
-          <div className="absolute left-0 right-0 bottom-0 h-8 bg-gradient-to-t from-[var(--bg-secondary)] to-transparent" />
+          <div className="absolute left-0 right-0 bottom-0 h-6 bg-gradient-to-t from-[var(--bg-secondary)] to-transparent" />
         )}
       </div>
 
       {showToggle && (
         <button
           onClick={() => setExpanded(v => !v)}
-          className="mt-2 text-xs text-[var(--link-color)] hover:underline"
+          className="mt-1.5 text-xs text-[var(--link-color)] hover:underline"
         >
           {expanded ? '收起' : '展开'}
         </button>
