@@ -204,16 +204,16 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
         </div>
 
         {/* Floating toolbar */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/90 to-transparent pointer-events-none">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 pointer-events-auto">
+        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 bg-gradient-to-t from-[var(--bg-primary)] via-[var(--bg-primary)]/90 to-transparent pointer-events-none">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 sm:gap-1.5 pointer-events-auto">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center w-8 h-8 text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full transition-colors bg-[var(--bg-primary)]/50 backdrop-blur-sm"
+                className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full transition-colors bg-[var(--bg-primary)]/50 backdrop-blur-sm"
                 title="添加参考图"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               </button>
@@ -221,15 +221,15 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
               <button
                 type="button"
                 onClick={openBananaModal}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full transition-colors text-xs font-medium whitespace-nowrap bg-[var(--bg-primary)]/50 backdrop-blur-sm"
+                className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-[var(--text-tertiary)] hover:bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full transition-colors text-[11px] sm:text-xs font-medium whitespace-nowrap bg-[var(--bg-primary)]/50 backdrop-blur-sm"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                 </svg>
-                <span className="hidden sm:inline">提示词参考</span>
+                提示词
               </button>
 
-              <span className="mx-1 text-[var(--border-color)]">|</span>
+              <span className="mx-0.5 sm:mx-1 text-[var(--border-color)]">|</span>
 
               <div className="flex items-center bg-[var(--bg-secondary)]/80 backdrop-blur-sm rounded-lg p-0.5 border border-[var(--border-color)]">
                 <SelectWithChevron
@@ -262,7 +262,7 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
               onClick={handleSend}
               disabled={!canSend || isGenerating}
               className={[
-                'pointer-events-auto flex items-center justify-center w-10 h-10 rounded-xl transition-all active:scale-95',
+                'pointer-events-auto flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl transition-all active:scale-95 shrink-0',
                 canSend && !isGenerating
                   ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 shadow-md'
                   : 'bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] cursor-not-allowed shadow-none'
@@ -270,12 +270,12 @@ export default function ChatInput({ variant = 'inline' }: { variant?: 'inline' |
               aria-label="Send"
             >
               {isGenerating ? (
-                <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
                 </svg>
               )}
