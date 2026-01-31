@@ -508,16 +508,21 @@ function PromptCard({
           // 将十六进制转换为字符串
           let decoded = ''
           for (let i = 0; i < hex.length; i += 2) {
-            decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16))
+            decoded += String.fromCharCode(parseInt(hex.substring(i, i + 2), 16))
           }
-          // 如果解码成功且是有效 URL，返回解码后的 URL
+          // 如果解码成功且是有效 URL，递归处理（可能解码出 Twitter 链接）
           if (decoded.startsWith('http')) {
-            return decoded
+            return getProxiedUrl(decoded)
           }
         }
       } catch {
         // 解码失败，返回原 URL
       }
+    }
+
+    // Twitter 图片代理 - 使用 wsrv.nl 图片代理服务
+    if (url.includes('pbs.twimg.com')) {
+      return `https://wsrv.nl/?url=${encodeURIComponent(url)}`
     }
 
     return url
