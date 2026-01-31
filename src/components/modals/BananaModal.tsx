@@ -302,57 +302,54 @@ export default function BananaModal() {
       title="提示词参考"
       className="w-[95vw] max-w-5xl h-[85vh]"
     >
-      <div className="p-4 flex flex-col h-full gap-4">
+      <div className="p-3 sm:p-4 flex flex-col h-full gap-3">
         {/* Source + Filters */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col lg:flex-row gap-3">
-            <div className="flex flex-wrap gap-2">
-              {sourceTabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setSourceTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg text-sm transition-colors
-                    ${sourceTab === tab.id
-                      ? 'bg-[var(--accent-color)] text-white'
-                      : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
-                    }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {sourceTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setSourceTab(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-colors
+                  ${sourceTab === tab.id
+                    ? 'bg-[var(--accent-color)] text-white'
+                    : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-            <div className="flex flex-wrap gap-2">
-              {modeTabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setModeFilter(tab.id)}
-                  className={`px-4 py-2 rounded-lg text-sm transition-colors
-                    ${modeFilter === tab.id
-                      ? 'bg-[var(--ink)] text-[var(--paper)]'
-                      : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
-                    }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
+          <div className="flex flex-wrap items-center gap-2">
+            {modeTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setModeFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm transition-colors
+                  ${modeFilter === tab.id
+                    ? 'bg-[var(--ink)] text-[var(--paper)]'
+                    : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
             <input
               type="text"
               placeholder="搜索提示词..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] shadow-sm"
+              className="flex-1 min-w-[120px] px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm shadow-sm"
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
             <span className="text-xs text-[var(--text-tertiary)] shrink-0">标签：</span>
             <button
               type="button"
               onClick={() => setTagFilter('all')}
-              className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors
+              className={`px-2 py-1 rounded-full text-xs whitespace-nowrap border transition-colors
                 ${tagFilter === 'all'
                   ? 'bg-[var(--accent-color)] text-white border-transparent'
                   : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
@@ -365,7 +362,7 @@ export default function BananaModal() {
                 key={tag}
                 type="button"
                 onClick={() => setTagFilter(tag)}
-                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors
+                className={`px-2 py-1 rounded-full text-xs whitespace-nowrap border transition-colors
                   ${tagFilter === tag
                     ? 'bg-[var(--accent-color)] text-white border-transparent'
                     : 'bg-[var(--bg-primary)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
@@ -403,8 +400,8 @@ export default function BananaModal() {
               未找到相关提示词
             </div>
           ) : (
-            <div className="h-full overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="h-full overflow-y-auto -mx-1 px-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredItems.map((item) => (
                   <PromptCard
                     key={item.id}
@@ -441,8 +438,7 @@ function PromptCard({
   onCopy,
   onUse,
   onSave,
-  saveDisabled,
-  onTagClick
+  saveDisabled
 }: {
   item: PromptListItem
   onCopy: (text: string) => void
@@ -451,22 +447,35 @@ function PromptCard({
   saveDisabled: boolean
   onTagClick: (tag: string) => void
 }) {
-  const tags = extractTags(item.prompt || '', item.category || '', item.mode || '')
+  const [imgError, setImgError] = useState(false)
+
+  // 尝试使用 jsdelivr CDN 代理 GitHub 图片
+  const getProxiedUrl = (url: string) => {
+    if (!url) return ''
+    // 如果是 GitHub raw 链接，转换为 jsdelivr CDN
+    if (url.includes('raw.githubusercontent.com')) {
+      return url.replace(
+        /https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\//,
+        'https://cdn.jsdelivr.net/gh/$1/$2@$3/'
+      )
+    }
+    return url
+  }
+
+  const previewUrl = item.preview ? getProxiedUrl(item.preview) : ''
 
   return (
     <div className="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] overflow-hidden shadow-sm">
       {/* Preview Image */}
-      <div className="relative h-40 bg-[var(--bg-secondary)]">
-        {item.preview ? (
+      <div className="relative aspect-[3/2] bg-[var(--bg-secondary)]">
+        {previewUrl && !imgError ? (
           <img
-            src={item.preview}
+            src={previewUrl}
             alt={item.title}
             className="w-full h-full object-cover"
             loading="lazy"
             decoding="async"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/e2e8f0/94a3b8?text=No+Preview'
-            }}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--border-color)] text-[var(--text-tertiary)] text-xs font-medium">
@@ -475,28 +484,10 @@ function PromptCard({
         )}
       </div>
 
-      {/* Tags */}
-      <div className="px-3 pt-3 flex flex-wrap gap-1">
-        {tags.map((tag, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => onTagClick(tag)}
-            className={`px-2 py-0.5 text-xs rounded ${
-              idx === 0 ? 'bg-[var(--ink)] text-[var(--paper)]' :
-              idx === 1 ? (item.mode === 'generate' ? 'bg-[var(--success-color)] text-[var(--paper)]' : 'bg-[var(--link-color)] text-[var(--paper)]') :
-              'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)]'
-            }`}
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
-
       {/* Content */}
-      <div className="p-3 pt-2">
-        <h4 className="font-medium text-sm mb-2 truncate">{item.title}</h4>
-        <p className="text-xs text-[var(--text-secondary)] font-serif line-clamp-2 mb-3 h-8">
+      <div className="p-3">
+        <h4 className="font-medium text-sm mb-1 truncate">{item.title}</h4>
+        <p className="text-xs text-[var(--text-secondary)] font-serif line-clamp-2 mb-2">
           {item.prompt}
         </p>
 
