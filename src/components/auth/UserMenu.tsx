@@ -4,7 +4,7 @@ import { useAppStore } from '../../store/appStore'
 import { trackLoginClick, trackLogout } from '../../utils/analytics'
 
 export default function UserMenu() {
-  const { auth, login, logout, authLoading, usage } = useAppStore()
+  const { auth, login, logout, authLoading, usage, refreshUsage } = useAppStore()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -37,6 +37,8 @@ export default function UserMenu() {
     trackLogout()
     logout()
     setIsOpen(false)
+    // 刷新使用次数状态
+    refreshUsage()
   }
 
   if (authLoading) {
