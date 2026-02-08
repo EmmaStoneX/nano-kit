@@ -167,8 +167,8 @@ export const createAuthSlice: StateCreator<AuthSlice, [], [], AuthSlice> = (set,
         console.error('Auth callback error:', error)
       }
 
-      // 清除 URL 中的 auth token
-      window.location.hash = ''
+      // 清除 URL 中的 auth token（完全移除 hash，不留空 #）
+      history.replaceState(null, '', window.location.pathname + window.location.search)
       set({ authLoading: false })
     }
   }
