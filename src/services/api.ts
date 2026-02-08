@@ -30,6 +30,14 @@ export async function sendMessage(text: string, images: ImageState[]) {
     return
   }
 
+  // 检查使用次数限制（未登录用户每日5次）
+  const { checkAndIncrementUsage } = store
+  const { allowed } = await checkAndIncrementUsage()
+  if (!allowed) {
+    showToast('今日免费次数已用完，请登录后继续使用', 'warning')
+    return
+  }
+
   // 检查速率限制
   const waitTime = imageRateLimiter.getWaitTime()
   if (waitTime > 0) {
@@ -90,10 +98,10 @@ export async function sendMessage(text: string, images: ImageState[]) {
     const isNoResponse = msg.includes('no response') || msg.includes('No response')
     const isTimeout = msg.includes('timeout') || msg.includes('Timeout') || msg.includes('ETIMEDOUT')
     const isNetwork = msg.includes('network') || msg.includes('Network') || msg.includes('fetch')
-    
+
     // 记录错误，调整速率
     imageRateLimiter.onError(is429)
-    
+
     // 友好的错误信息
     if (is429) {
       errorType = 'rate_limit'
@@ -154,13 +162,13 @@ export async function sendMessage(text: string, images: ImageState[]) {
       </div>
     `
     await saveMessage(sessionId, 'bot', 'Error', [], errorHtml)
-    
+
     // Toast 提示
-    const toastMsg = errorType === 'rate_limit' 
-      ? '请求限流，请稍后重试' 
+    const toastMsg = errorType === 'rate_limit'
+      ? '请求限流，请稍后重试'
       : errorType === 'no_response'
-      ? 'API 无响应，请稍后重试'
-      : '生成失败'
+        ? 'API 无响应，请稍后重试'
+        : '生成失败'
     showToast(toastMsg, 'error', 3000)
   } finally {
     removeActiveGeneration(sessionId)
