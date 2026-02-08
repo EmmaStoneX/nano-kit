@@ -28,7 +28,8 @@ export default function InfographicPage() {
     openLightbox,
     createSession,
     saveMessage,
-    bumpGalleryRefreshKey
+    bumpGalleryRefreshKey,
+    checkAndIncrementUsage
   } = useAppStore()
   const { setHeader } = usePageHeader()
 
@@ -594,6 +595,13 @@ export default function InfographicPage() {
       return
     }
 
+    // 检查使用次数限制（未登录用户每日5次）
+    const { allowed } = await checkAndIncrementUsage()
+    if (!allowed) {
+      showToast('今日免费次数已用完，请登录后继续使用', 'warning')
+      return
+    }
+
     // 检查速率限制
     const waitTime = imageRateLimiter.getWaitTime()
     if (waitTime > 0) {
@@ -915,7 +923,7 @@ export default function InfographicPage() {
               </div>
             ) : (
               <div className="max-w-5xl mx-auto space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm text-[var(--text-secondary)]">
                     已生成 {blocks.length} 份信息图提示词，可编辑后生成图片
                   </div>

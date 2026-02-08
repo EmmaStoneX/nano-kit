@@ -31,7 +31,8 @@ export default function ArticleIllustrationPage() {
     openLightbox,
     createSession,
     saveMessage,
-    bumpGalleryRefreshKey
+    bumpGalleryRefreshKey,
+    checkAndIncrementUsage
   } = useAppStore()
   const { setHeader } = usePageHeader()
 
@@ -671,6 +672,13 @@ export default function ArticleIllustrationPage() {
       return
     }
 
+    // 检查使用次数限制（未登录用户每日5次）
+    const { allowed } = await checkAndIncrementUsage()
+    if (!allowed) {
+      showToast('今日免费次数已用完，请登录后继续使用', 'warning')
+      return
+    }
+
     // 检查速率限制
     const waitTime = imageRateLimiter.getWaitTime()
     if (waitTime > 0) {
@@ -1058,98 +1066,98 @@ export default function ArticleIllustrationPage() {
                           key={block.id}
                           className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm"
                         >
-                      <div className="p-4 border-b border-[var(--border-color)]">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium truncate">
-                              {block.kind === 'cover' ? `封面 · ${block.title}` : `${displayNo}. ${block.title}`}
-                            </div>
-                            {block.source && (
-                              <div className="text-xs text-[var(--text-tertiary)] font-serif mt-1 line-clamp-2">
-                                {block.source}
+                          <div className="p-4 border-b border-[var(--border-color)]">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium truncate">
+                                  {block.kind === 'cover' ? `封面 · ${block.title}` : `${displayNo}. ${block.title}`}
+                                </div>
+                                {block.source && (
+                                  <div className="text-xs text-[var(--text-tertiary)] font-serif mt-1 line-clamp-2">
+                                    {block.source}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-xs shrink-0">
-                            <button
-                              onClick={() => copyPrompt(i)}
-                              className="px-2.5 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] transition-colors"
-                            >
-                              复制
-                            </button>
-                            <button
-                              onClick={() => generateImage(i)}
-                              disabled={block.imageData === 'loading'}
-                              className={[
-                                'px-2.5 py-1.5 rounded-xl transition-colors',
-                                block.imageData === 'loading'
-                                  ? 'bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] cursor-not-allowed'
-                                  : 'bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)]'
-                              ].join(' ')}
-                            >
-                              {block.imageData === 'loading' ? '生成中...' : block.imageData ? '重生成' : '生图'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-4 space-y-3">
-                        <textarea
-                          value={block.prompt}
-                          onChange={(e) => {
-                            const v = e.target.value
-                            setBlocks(prev => {
-                              const next = [...prev]
-                              next[i] = { ...next[i], prompt: v }
-                              return next
-                            })
-                          }}
-                          placeholder="可编辑提示词..."
-                          className="w-full px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm h-28 resize-none font-serif"
-                        />
-
-                        <div
-                          className="relative w-full min-h-[220px] lg:min-h-0 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl overflow-hidden"
-                          style={{ aspectRatio: toAspect(ratio) }}
-                        >
-                          {block.imageData && block.imageData !== 'loading' && (
-                            <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
-                              <button
-                                onClick={() => downloadImage(block.imageData!, `article_${Date.now()}_${i}.png`)}
-                                className="px-2.5 py-1.5 rounded-full bg-[rgba(20,20,19,0.55)] text-white text-xs border border-white/15 backdrop-blur-sm hover:bg-[rgba(20,20,19,0.72)] transition-colors shadow-sm"
-                              >
-                                下载
-                              </button>
-                              <button
-                                onClick={() => {
-                                  useAppStore.getState().openSlicerModal(block.imageData!)
-                                  navigate('/editor')
-                                }}
-                                className="px-2.5 py-1.5 rounded-full bg-[rgba(20,20,19,0.55)] text-white text-xs border border-white/15 backdrop-blur-sm hover:bg-[rgba(20,20,19,0.72)] transition-colors shadow-sm"
-                              >
-                                去切片
-                              </button>
+                              <div className="flex items-center gap-2 text-xs shrink-0">
+                                <button
+                                  onClick={() => copyPrompt(i)}
+                                  className="px-2.5 py-1.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                                >
+                                  复制
+                                </button>
+                                <button
+                                  onClick={() => generateImage(i)}
+                                  disabled={block.imageData === 'loading'}
+                                  className={[
+                                    'px-2.5 py-1.5 rounded-xl transition-colors',
+                                    block.imageData === 'loading'
+                                      ? 'bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] cursor-not-allowed'
+                                      : 'bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)]'
+                                  ].join(' ')}
+                                >
+                                  {block.imageData === 'loading' ? '生成中...' : block.imageData ? '重生成' : '生图'}
+                                </button>
+                              </div>
                             </div>
-                          )}
-                          {block.imageData === 'loading' ? (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <div className="loading-spinner w-8 h-8" />
-                            </div>
-                          ) : block.imageData ? (
-                            <img
-                              src={block.imageData}
-                              alt=""
-                              className="w-full h-full object-cover cursor-pointer"
-                              onClick={() => openLightbox(block.imageData!)}
+                          </div>
+
+                          <div className="p-4 space-y-3">
+                            <textarea
+                              value={block.prompt}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setBlocks(prev => {
+                                  const next = [...prev]
+                                  next[i] = { ...next[i], prompt: v }
+                                  return next
+                                })
+                              }}
+                              placeholder="可编辑提示词..."
+                              className="w-full px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm h-28 resize-none font-serif"
                             />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs text-[var(--text-tertiary)]">
-                              暂无图片，可点击“生图”
+
+                            <div
+                              className="relative w-full min-h-[220px] lg:min-h-0 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl overflow-hidden"
+                              style={{ aspectRatio: toAspect(ratio) }}
+                            >
+                              {block.imageData && block.imageData !== 'loading' && (
+                                <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+                                  <button
+                                    onClick={() => downloadImage(block.imageData!, `article_${Date.now()}_${i}.png`)}
+                                    className="px-2.5 py-1.5 rounded-full bg-[rgba(20,20,19,0.55)] text-white text-xs border border-white/15 backdrop-blur-sm hover:bg-[rgba(20,20,19,0.72)] transition-colors shadow-sm"
+                                  >
+                                    下载
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      useAppStore.getState().openSlicerModal(block.imageData!)
+                                      navigate('/editor')
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-full bg-[rgba(20,20,19,0.55)] text-white text-xs border border-white/15 backdrop-blur-sm hover:bg-[rgba(20,20,19,0.72)] transition-colors shadow-sm"
+                                  >
+                                    去切片
+                                  </button>
+                                </div>
+                              )}
+                              {block.imageData === 'loading' ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <div className="loading-spinner w-8 h-8" />
+                                </div>
+                              ) : block.imageData ? (
+                                <img
+                                  src={block.imageData}
+                                  alt=""
+                                  className="w-full h-full object-cover cursor-pointer"
+                                  onClick={() => openLightbox(block.imageData!)}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs text-[var(--text-tertiary)]">
+                                  暂无图片，可点击“生图”
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    </div>
                       )
                     })
                   })()}
