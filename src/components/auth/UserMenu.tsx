@@ -50,7 +50,7 @@ export default function UserMenu() {
     return (
       <button
         onClick={handleLogin}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] transition-colors"
+        className="flex items-center gap-1.5 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
         title="使用 GitHub 登录"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -72,16 +72,16 @@ export default function UserMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 p-1 rounded-full hover:bg-[var(--bg-secondary)] transition-colors ${isOpen ? 'bg-[var(--bg-secondary)]' : ''}`}
+        className={`flex items-center gap-1.5 px-2 py-1.5 hover:bg-[var(--bg-tertiary)] transition-colors ${isOpen ? 'bg-[var(--bg-tertiary)]' : ''}`}
       >
         {auth.user?.avatar_url ? (
           <img
             src={auth.user.avatar_url}
             alt={auth.user.login}
-            className="w-8 h-8 rounded-full border border-[var(--border-color)]"
+            className="w-7 h-7 rounded-full border border-[var(--border-color)]"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-[var(--accent-color)] flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-[var(--accent-color)] flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>

@@ -28,23 +28,29 @@ export default function DesktopHeader() {
           </div>
         )}
         {header?.actions && <div className="h-6 w-px bg-[var(--border-color)]" aria-hidden="true" />}
-        <UserMenu />
-        <a
-          href="https://github.com/EmmaStoneX/nano-kit"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)] shadow-sm hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
-          title="GitHub"
-        >
-          <GitHubIcon />
-        </a>
-        <button
-          onClick={toggleTheme}
-          className="p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)] shadow-sm hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
-          title={isDark ? '切换到明亮模式' : '切换到暗黑模式'}
-        >
-          {isDark ? <SunIcon /> : <MoonIcon />}
-        </button>
+        
+        {/* 工具栏组合 */}
+        <div className="flex items-center rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-color)] shadow-sm overflow-hidden">
+          <UserMenu />
+          <div className="w-px h-5 bg-[var(--border-color)]" />
+          <a
+            href="https://github.com/EmmaStoneX/nano-kit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2.5 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+            title="GitHub"
+          >
+            <GitHubIcon />
+          </a>
+          <div className="w-px h-5 bg-[var(--border-color)]" />
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+            title={isDark ? '切换到明亮模式' : '切换到暗黑模式'}
+          >
+            {isDark ? <SunIcon /> : <MoonIcon />}
+          </button>
+        </div>
       </div>
     </header>
   )
