@@ -16,7 +16,9 @@ export async function sendMessage(text: string, images: ImageState[]) {
     loadSessions,
     addActiveGeneration,
     removeActiveGeneration,
-    showToast
+    showToast,
+    checkAndIncrementUsage,
+    refreshUsage
   } = store
 
   const config = getActiveConfig()
@@ -30,10 +32,9 @@ export async function sendMessage(text: string, images: ImageState[]) {
     return
   }
 
-  // 检查使用次数限制（未登录用户每日5次）
-  const { checkAndIncrementUsage } = store
-  const { allowed } = await checkAndIncrementUsage()
-  if (!allowed) {
+  // 先检查使用次数（不扣减），只有成功后才扣减
+  const { auth, usage } = store
+  if (!auth.isAuthenticated && usage.remaining <= 0) {
     showToast('今日免费次数已用完，请登录后继续使用', 'warning')
     return
   }
@@ -89,6 +90,10 @@ export async function sendMessage(text: string, images: ImageState[]) {
 
     // Process response
     await processResponse(data, sessionId)
+
+    // 生成成功后才扣减使用次数
+    await checkAndIncrementUsage()
+    refreshUsage()
 
   } catch (e: any) {
     console.error('API Error:', e)
