@@ -137,7 +137,7 @@ export default function GalleryMasonry({
   }, [galleryRefreshKey, activeGenerations])
 
   const handleDeleteImage = async (item: ReadyGalleryItem) => {
-    if (!item.messageId) {
+    if (item.messageId == null || item.messageId <= 0) {
       showToast('无法删除该图片', 'error')
       return
     }
@@ -374,7 +374,7 @@ export default function GalleryMasonry({
                         </svg>
                       }
                     />
-                    {item.messageId ? (
+                    {item.messageId != null && item.messageId > 0 ? (
                       <OverlayActionButton
                         label="删除"
                         onClick={() => handleDeleteImage(item)}
@@ -458,6 +458,18 @@ export default function GalleryMasonry({
                         </svg>
                       )}
                     />
+                    {item.messageId != null && item.messageId > 0 && (
+                      <SmallButton
+                        onClick={() => handleDeleteImage(item)}
+                        label="删除图片"
+                        icon={(
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        )}
+                      />
+                    )}
                   </div>
                 ) : (
                   <div className="mt-3 text-xs text-[var(--text-tertiary)]">
