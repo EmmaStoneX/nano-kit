@@ -28,6 +28,8 @@ type GeneratingGalleryItem = {
 
 type GalleryItem = ReadyGalleryItem | GeneratingGalleryItem
 
+type LayoutMode = 'fit' | 'square' | 'masonry'
+
 export default function GalleryMasonry({
   contentPaddingBottomClassName,
   onCountChange
@@ -49,9 +51,18 @@ export default function GalleryMasonry({
     showConfirm
   } = useAppStore()
 
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>(() => {
+    return (localStorage.getItem('gallery_layout') as LayoutMode) || 'fit'
+  })
+
   const [items, setItems] = useState<GalleryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const switchLayout = (mode: LayoutMode) => {
+    setLayoutMode(mode)
+    localStorage.setItem('gallery_layout', mode)
+  }
 
   const loadGallery = async () => {
     setLoading(true)
@@ -249,12 +260,60 @@ export default function GalleryMasonry({
 
   return (
     <div className={contentPaddingBottomClassName || ''}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* 布局切换 */}
+      <div className="flex items-center justify-end mb-3 gap-1">
+        <LayoutToggle
+          active={layoutMode === 'fit'}
+          onClick={() => switchLayout('fit')}
+          label="适应"
+          icon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="10" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="16" width="7" height="5" rx="1" />
+              <rect x="14" y="13" width="7" height="8" rx="1" />
+            </svg>
+          }
+        />
+        <LayoutToggle
+          active={layoutMode === 'square'}
+          onClick={() => switchLayout('square')}
+          label="网格"
+          icon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          }
+        />
+        <LayoutToggle
+          active={layoutMode === 'masonry'}
+          onClick={() => switchLayout('masonry')}
+          label="瀑布流"
+          icon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="13" rx="1" />
+              <rect x="14" y="3" width="7" height="8" rx="1" />
+              <rect x="3" y="19" width="7" height="2" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          }
+        />
+      </div>
+
+      {/* 图片网格 */}
+      <div className={
+        layoutMode === 'masonry'
+          ? 'columns-2 lg:columns-3 gap-4 space-y-4'
+          : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4'
+      }>
         {items.map((item) => (
-          <div key={item.id} className="w-full">
+          <div key={item.id} className={layoutMode === 'masonry' ? 'break-inside-avoid' : 'w-full'}>
             <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden shadow-sm">
               {item.type === 'generating' ? (
-                <div className="relative w-full aspect-square bg-[var(--bg-tertiary)] overflow-hidden">
+                <div className={`relative w-full ${layoutMode === 'square' ? 'aspect-square' : layoutMode === 'fit' ? 'aspect-square' : 'aspect-square'} bg-[var(--bg-tertiary)] overflow-hidden`}>
                   {item.referenceSrc ? (
                     <img
                       src={item.referenceSrc}
@@ -278,7 +337,13 @@ export default function GalleryMasonry({
                   <img
                     src={item.imageSrc}
                     alt=""
-                    className="w-full h-auto cursor-pointer hover:opacity-95 transition-opacity"
+                    className={`w-full cursor-pointer hover:opacity-95 transition-opacity ${
+                      layoutMode === 'square'
+                        ? 'aspect-square object-cover'
+                        : layoutMode === 'fit'
+                        ? 'aspect-[3/4] object-cover'
+                        : 'h-auto'
+                    }`}
                     onClick={() => openLightbox(item.imageSrc)}
                     loading="lazy"
                   />
@@ -525,6 +590,35 @@ function OverlayActionButton({
       title={label}
     >
       <span className="opacity-90">{icon}</span>
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  )
+}
+
+function LayoutToggle({
+  active,
+  onClick,
+  label,
+  icon
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+  icon: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors ${
+        active
+          ? 'bg-[var(--accent-color)] text-white'
+          : 'bg-[var(--bg-secondary)] text-[var(--text-tertiary)] border border-[var(--border-color)] hover:text-[var(--text-secondary)]'
+      }`}
+      aria-label={label}
+      title={label}
+    >
+      {icon}
       <span className="hidden sm:inline">{label}</span>
     </button>
   )
