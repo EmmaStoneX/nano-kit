@@ -298,6 +298,7 @@ async function parseStreamResponse(response: Response) {
   const decoder = new TextDecoder()
   let buffer = ''
   let fullContent = ''
+  const collectedChunks: any[] = []
 
   while (true) {
     const { done, value } = await reader.read()
@@ -314,6 +315,7 @@ async function parseStreamResponse(response: Response) {
 
         try {
           const json = JSON.parse(data)
+          collectedChunks.push(json)
           if (json.choices?.[0]?.delta?.content) {
             fullContent += json.choices[0].delta.content
           }
@@ -327,7 +329,8 @@ async function parseStreamResponse(response: Response) {
   return {
     choices: [{
       message: { content: fullContent }
-    }]
+    }],
+    _chunks: collectedChunks
   }
 }
 
@@ -338,59 +341,95 @@ async function processResponse(data: any, sessionId: number) {
   let botHtml = ''
   const generatedImages: string[] = []
 
-  // Handle OpenAI format
+  // 1. Handle OpenAI Images API format: data.data[].b64_json / data.data[].url
+  if (Array.isArray(data.data)) {
+    for (const item of data.data) {
+      if (item.b64_json) {
+        generatedImages.push(item.b64_json)
+        const fullBase64 = `data:image/png;base64,${item.b64_json}`
+        botHtml += createImageHtml(fullBase64, `gemini_${Date.now()}.png`)
+      } else if (item.url) {
+        try {
+          const imgRes = await nativeFetch(item.url)
+          const blob = await imgRes.blob()
+          const reader = new FileReader()
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1])
+            reader.readAsDataURL(blob)
+          })
+          generatedImages.push(base64)
+          botHtml += createImageHtml(`data:image/png;base64,${base64}`, `gemini_${Date.now()}.png`)
+        } catch (e) {
+          console.error('Failed to fetch image URL:', e)
+        }
+      }
+    }
+  }
+
+  // 2. Handle OpenAI Chat format: choices[].message.content
   if (data.choices?.[0]?.message?.content) {
     const content = data.choices[0].message.content
 
-    // Extract images from markdown
-    const dataUrlMatch = content.match(/!\[.*?\]\((data:image\/[^)]+)\)/)
-    const httpUrlMatch = content.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/)
+    // Extract ALL images from markdown (not just the first one)
+    const imgRegex = /!\[.*?\]\(((?:data:image\/[^)]+|https?:\/\/[^)]+))\)/g
+    let match
+    let hasImages = false
 
-    if (dataUrlMatch) {
-      const imageData = dataUrlMatch[1].split(',')[1]
-      generatedImages.push(imageData)
-      const fullBase64 = dataUrlMatch[1]
-      const filename = `gemini_${Date.now()}.png`
-
-      botHtml += createImageHtml(fullBase64, filename)
-    } else if (httpUrlMatch) {
-      // Fetch remote image
-      try {
-        const imgRes = await nativeFetch(httpUrlMatch[1])
-        const blob = await imgRes.blob()
-        const reader = new FileReader()
-        const base64 = await new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve((reader.result as string).split(',')[1])
-          reader.readAsDataURL(blob)
-        })
-        generatedImages.push(base64)
-        const fullBase64 = `data:image/jpeg;base64,${base64}`
-        const filename = `gemini_${Date.now()}.png`
-        botHtml += createImageHtml(fullBase64, filename)
-      } catch (e) {
-        console.error('Failed to fetch image:', e)
+    while ((match = imgRegex.exec(content)) !== null) {
+      hasImages = true
+      const url = match[1]
+      if (url.startsWith('data:')) {
+        const imageData = url.split(',')[1]
+        if (imageData) {
+          generatedImages.push(imageData)
+          botHtml += createImageHtml(url, `gemini_${Date.now()}.png`)
+        }
+      } else {
+        try {
+          const imgRes = await nativeFetch(url)
+          const blob = await imgRes.blob()
+          const reader = new FileReader()
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1])
+            reader.readAsDataURL(blob)
+          })
+          generatedImages.push(base64)
+          botHtml += createImageHtml(`data:image/jpeg;base64,${base64}`, `gemini_${Date.now()}.png`)
+        } catch (e) {
+          console.error('Failed to fetch image:', e)
+        }
       }
     }
 
-    // Extract text content
+    // If no markdown images found, check for raw base64 in content
+    if (!hasImages) {
+      const rawBase64Match = content.match(/^([A-Za-z0-9+/]{100,}={0,2})$/)
+      if (rawBase64Match) {
+        const base64Data = rawBase64Match[1]
+        generatedImages.push(base64Data)
+        const mimeType = base64Data.startsWith('/9j/') ? 'image/jpeg' : 'image/png'
+        botHtml += createImageHtml(`data:${mimeType};base64,${base64Data}`, `gemini_${Date.now()}.png`)
+      }
+    }
+
+    // Extract text content (remove image markdown)
     const textContent = content
       .replace(/!\[.*?\]\((data:image\/[^)]+)\)/g, '')
       .replace(/!\[.*?\]\((https?:\/\/[^)]+)\)/g, '')
       .trim()
 
-    if (textContent) {
+    if (textContent && !/^[A-Za-z0-9+/]{100,}={0,2}$/.test(textContent)) {
       botHtml = `<div class="msg-content" style="padding:12px 18px; white-space:pre-wrap;">${escapeHtml(textContent)}</div>` + botHtml
     }
   }
 
-  // Handle Gemini format
+  // 3. Handle Gemini format: candidates[].content.parts[]
   if (data.candidates?.[0]?.content?.parts) {
     data.candidates[0].content.parts.forEach((part: any) => {
       if (part.inlineData?.mimeType?.startsWith('image/')) {
         const fullBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
         generatedImages.push(part.inlineData.data)
-        const filename = `gemini_${Date.now()}.png`
-        botHtml += createImageHtml(fullBase64, filename)
+        botHtml += createImageHtml(fullBase64, `gemini_${Date.now()}.png`)
       } else if (part.text) {
         // Check for embedded images in text
         const imgRegex = /!\[([^\]]*)\]\(((?:https?:|data:image\/)[^)]+)\)/g
@@ -399,12 +438,10 @@ async function processResponse(data: any, sessionId: number) {
 
         while ((match = imgRegex.exec(textContent)) !== null) {
           const url = match[2]
-          const filename = `image_${Date.now()}.png`
-
           if (url.startsWith('data:')) {
             const base64Data = url.split(',')[1]
             if (base64Data) generatedImages.push(base64Data)
-            botHtml += createImageHtml(url, filename)
+            botHtml += createImageHtml(url, `image_${Date.now()}.png`)
           }
         }
 
@@ -429,6 +466,12 @@ async function processResponse(data: any, sessionId: number) {
     }
 
     store.showToast('生成完成', 'success')
+  } else {
+    // 没有提取到任何内容，记录调试信息
+    console.warn('processResponse: no content extracted from response', JSON.stringify(data).substring(0, 500))
+    await saveMessage(sessionId, 'bot', 'No image generated', [], `<div class="msg-content" style="padding:12px 18px; color: var(--text-tertiary);">未能从响应中提取到图片，请检查 API 配置或重试</div>`)
+    bumpGalleryRefreshKey()
+    store.showToast('未能提取到图片', 'warning')
   }
 }
 
