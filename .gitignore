@@ -22,6 +22,7 @@ wrangler.toml
 # AI assistant configs
 AGENTS.md
 claude.md
+CLAUDE.md
 .claude/
 
 # TypeScript incremental builds
